@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+    <title>Teste Áudio PWA 🎙️</title>
+    <link rel="manifest" href="manifest.json">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root { --p: #6c5ce7; --bg: #f8f9fa; }
+        
+        /* Ajuste para o teclado não quebrar o layout */
+        html, body { height: 100dvh; margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background: var(--bg); }
+        
+        #app-container { display: flex; flex-direction: column; height: 100%; }
+        
+        header { background: var(--p); color: white; padding: 15px; text-align: center; font-weight: bold; flex-shrink: 0; }
+        
+        #chatBox { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+        
+        /* Balão de Áudio */
+        .audio-msg { background: white; padding: 10px; border-radius: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); align-self: flex-start; max-width: 85%; }
+        .sent { align-self: flex-end; background: #e1dcf9; }
+        
+        audio { width: 220px; height: 40px; }
+
+        /* Controles fixos embaixo */
+        .controls { background: white; padding: 15px; display: flex; align-items: center; justify-content: center; border-top: 1px solid #eee; flex-shrink: 0; }
+        
+        #btn-mic { 
+            width: 65px; height: 65px; border-radius: 50%; border: none;
+            background: #ff4757; color: white; font-size: 1.8rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
+            transition: all 0.2s;
+        }
+
+        .recording { background: #c0392b !important; transform: scale(1.1); animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(255, 71, 87, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); } }
+        
+        #status-txt { position: absolute; bottom: 90px; color: #ff4757; font-weight: bold; font-size: 0.8rem; display: none; }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <header>NOSSO TESTE DE ÁUDIO ❤️</header>
+
+    <div id="chatBox"></div>
+
+    <div id="status-txt">🔴 Gravando áudio...</div>
+
+    <div class="controls">
+        <button id="btn-mic">🎙️</button>
+    </div>
+</div>
+
+<script>
+    // --- CONFIGURAÇÕES REAIS (Vimos nas suas fotos) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyAsK3kEuustv7KyoQXR0Ep-whTpDCDa03w",
+        databaseURL: "https://manuu-c23a7-default-rtdb.firebaseio.com",
+        projectId: "manuu-c23a7"
+    };
+
+    const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dtcpcvww8/video/upload";
+    const CLOUDINARY_PRESET = "Nosso_mundo"; 
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+
+    const btnMic = document.getElementById('btn-mic');
+    const statusTxt = document.getElementById('status-txt');
+
+    // --- LÓGICA DE GRAVAÇÃO ---
+    btnMic.onclick = async () => {
+        if (!isRecording) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                    enviarParaCloudinary(audioBlob);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                btnMic.classList.add('recording');
+                statusTxt.style.display = "block";
+            } catch (err) {
+                alert("Ative o microfone nas configurações do site!");
+            }
+        } else {
+            mediaRecorder.stop();
+            isRecording = false;
+            btnMic.classList.remove('recording');
+            statusTxt.style.display = "none";
+        }
+    };
+
+    async function enviarParaCloudinary(blob) {
+        const formData = new FormData();
+        formData.append('file', blob);
+        formData.append('upload_preset', CLOUDINARY_PRESET);
+
+        try {
+            const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
+            const data = await res.json();
+            
+            if(data.secure_url) {
+                // Salva no Firebase (pasta de teste separada)
+                db.ref('mensagens_audio_teste').push({
+                    url: data.secure_url,
+                    timestamp: Date.now()
+                });
+            }
+        } catch (err) {
+            console.error("Erro no upload:", err);
+            alert("Erro ao enviar áudio.");
+        }
+    }
+
+    // --- ESCUTAR MENSAGENS ---
+    db.ref('mensagens_audio_teste').on('value', snap => {
+        const chatBox = document.getElementById('chatBox');
+        chatBox.innerHTML = "";
+        snap.forEach(child => {
+            const m = child.val();
+            chatBox.innerHTML += `
+                <div class="audio-msg">
+                    <audio controls src="${m.url}"></audio>
+                </div>`;
+        });
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    // Registrar PWA
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
+</script>
+</body>
+</html>
