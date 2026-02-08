@@ -1,13 +1,22 @@
-const CACHE_NAME = 'audio-pwa-v1';
+importScripts('https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.17.1/firebase-messaging-compat.js');
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(['index.html', 'manifest.json']))
-  );
+firebase.initializeApp({
+  apiKey: "SUA_API_KEY",
+  projectId: "SEU_PROJECT_ID",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId: "SEU_APP_ID"
 });
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((res) => res || fetch(e.request))
-  );
+const messaging = firebase.messaging();
+
+// Esse código "ouve" a notificação vindo do céu (nuvem)
+messaging.onBackgroundMessage((payload) => {
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: 'https://cdn-icons-png.flaticon.com/512/2589/2589175.png'
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
 });
