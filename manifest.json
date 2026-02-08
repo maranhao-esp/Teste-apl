@@ -1,7 +1,7 @@
 {
   "name": "TESTE NOTIFICACOES",
   "short_name": "AppTeste",
-  "start_url": "index.html?v=teste", 
+  "start_url": "index.html?versao=notificacoes",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ff9f43",
