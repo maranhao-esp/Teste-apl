@@ -1,0 +1,15 @@
+{
+  "name": "Teste Áudio PWA",
+  "short_name": "AudioTest",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#6c5ce7",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2589/2589175.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
