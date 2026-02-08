@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PWA Teste Oficial 🎙️🔔</title>
+    <title>PWA Notificações 🔔</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
@@ -11,105 +11,70 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-messaging-compat.js"></script>
 
     <style>
-        body { font-family: sans-serif; margin: 0; background: #f0f2f5; display: flex; flex-direction: column; height: 100dvh; }
-        header { background: #6c5ce7; color: white; padding: 15px; text-align: center; font-weight: bold; }
-        
+        body { font-family: sans-serif; margin: 0; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
         #btn-notificacao {
-            background: #ff9f43; color: white; border: none; padding: 10px;
-            margin: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;
+            background: #ff9f43; color: white; border: none; padding: 20px;
+            border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-
-        #chatBox { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        
-        .controls { background: white; padding: 20px; display: flex; justify-content: center; border-top: 1px solid #ddd; }
-        
-        #btn-mic { 
-            width: 60px; height: 60px; border-radius: 50%; border: none;
-            background: #ff4757; color: white; font-size: 1.5rem;
-        }
-        .recording { animation: pulse 1s infinite; background: #c0392b !important; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .status { margin-top: 20px; color: #555; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
-    <header>MEU PWA DE TESTE</header>
-    
     <button id="btn-notificacao" onclick="ativarNotificacoes()">🔔 ATIVAR NOTIFICAÇÕES</button>
-
-    <div id="chatBox">
-        <p style="text-align:center; color: #888;">As mensagens aparecerão aqui...</p>
-    </div>
-
-    <div class="controls">
-        <button id="btn-mic">🎙️</button>
-    </div>
+    <div id="status" class="status">Clique acima para começar</div>
 
     <script>
-        // --- 1. CONFIGURAÇÕES (COLOQUE SEUS DADOS AQUI) ---
+        // 1. Sua configuração que você postou
         const firebaseConfig = {
-  apiKey: "AIzaSyAsK3kEuustv7KyoQXR0Ep-whTpDCDa03w",
-  authDomain: "manuu-c23a7.firebaseapp.com",
-  databaseURL: "https://manuu-c23a7-default-rtdb.firebaseio.com",
-  projectId: "manuu-c23a7",
-  storageBucket: "manuu-c23a7.firebasestorage.app",
-  messagingSenderId: "378235951611",
-  appId: "1:378235951611:web:72c855fbb5ccdb1a84535e",
-  measurementId: "G-2V1EXW1794"
-};
+          apiKey: "AIzaSyAsK3kEuustv7KyoQXR0Ep-whTpDCDa03w",
+          authDomain: "manuu-c23a7.firebaseapp.com",
+          databaseURL: "https://manuu-c23a7-default-rtdb.firebaseio.com",
+          projectId: "manuu-c23a7",
+          storageBucket: "manuu-c23a7.firebasestorage.app",
+          messagingSenderId: "378235951611",
+          appId: "1:378235951611:web:72c855fbb5ccdb1a84535e",
+          measurementId: "G-2V1EXW1794"
+        };
 
-        // --- 2. INICIALIZAÇÃO ---
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const messaging = firebase.messaging();
 
-        // --- 3. FUNÇÃO DAS NOTIFICAÇÕES ---
         async function ativarNotificacoes() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerText = "Pedindo permissão...";
+
             try {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {
-                    // SUBSTITUA pela sua Chave VAPID do Firebase (Cloud Messaging > Web Push certificates)
+                    // 2. Sua chave VAPID que você mandou agora
                     const token = await messaging.getToken({ 
-                        vapidKey: 'SUA_CHAVE_VAPID_AQUI' 
+                        vapidKey: 'BPn6ATIl_Rjnxsn8yiRCQBZ2XtisDs5qIW6hiq391z6YTYEtKyY9OQfVAgs2y6v3siAamzjyRDjTMrDSzbm9uY0' 
                     });
                     
                     if (token) {
-                        console.log("Token gerado:", token);
-                        // Salva o token no banco para você poder enviar mensagens depois
-                        db.ref('tokens_pwa').child('meu_celular').set(token);
-                        alert("Notificações Ativas! Token salvo.");
+                        console.log("Token:", token);
+                        // Salva no Firebase para podermos enviar a mensagem depois
+                        await db.ref('tokens_pwa').child('meu_aparelho').set(token);
+                        statusDiv.innerText = "✅ Notificações Ativas!";
+                        alert("Pronto! Seu celular já pode receber avisos.");
                     }
                 } else {
-                    alert("Permissão negada!");
+                    statusDiv.innerText = "❌ Permissão negada pelo usuário.";
                 }
             } catch (error) {
-                console.error("Erro ao ativar notificações:", error);
-                alert("Erro: " + error.message);
+                console.error(error);
+                statusDiv.innerText = "Erro: " + error.message;
             }
         }
 
-        // --- 4. LÓGICA DO MICROFONE (RESUMO) ---
-        const btnMic = document.getElementById('btn-mic');
-        let isRecording = false;
-
-        btnMic.onclick = () => {
-            if (!isRecording) {
-                btnMic.classList.add('recording');
-                isRecording = true;
-                // Aqui entraria a lógica de gravação do Cloudinary que fizemos antes
-            } else {
-                btnMic.classList.remove('recording');
-                isRecording = false;
-            }
-        };
-
-        // --- 5. REGISTRO DO SERVICE WORKER ---
+        // Registro do Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then((reg) => {
-                    messaging.useServiceWorker(reg);
-                    console.log("PWA e Messaging prontos!");
-                });
+            navigator.serviceWorker.register('sw.js').then((reg) => {
+                messaging.useServiceWorker(reg);
+            });
         }
     </script>
 </body>
