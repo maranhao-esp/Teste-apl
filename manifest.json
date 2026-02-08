@@ -1,13 +1,13 @@
 {
-  "name": "Teste Áudio PWA",
-  "short_name": "AudioTest",
-  "start_url": "index.html",
+  "name": "TESTE NOTIFICACOES",
+  "short_name": "AppTeste",
+  "start_url": "index.html?v=teste", 
   "display": "standalone",
-  "background_color": "#f8f9fa",
-  "theme_color": "#6c5ce7",
+  "background_color": "#ffffff",
+  "theme_color": "#ff9f43",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2589/2589175.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/5968/5968310.png",
       "sizes": "512x512",
       "type": "image/png"
     }
